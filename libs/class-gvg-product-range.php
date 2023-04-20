@@ -196,9 +196,75 @@ class GVG_Product_Range {
 		$this->run_batch();
 		oik_menu_footer();
 		bw_flush();
+	}
 
+	/**
+	 * Displays the product range for the currently selected product.
+	 *
+	 * @param WC_Product_Simple $product
+	 *
+	 * @return void
+	 */
+	function display_product_range( $product ) {
+		$id = $product->get_id();
+		//echo '<p>Product range for ' . $id . '</p>';
+		$terms = wp_get_post_terms( $id, 'product_range' );
+		if ( is_wp_error( $terms ) ) {
+			//gob();
+			return;
+		}
+		//print_r( $terms );
 
+		if ( count( $terms) ) {
+			$term = $terms[0];
+		}
+		/*
+		echo "term";
+		echo $term->term_id;
+		echo $term->name;
+		echo "mert";
+		*/
+		$args = [ 'post_type' => 'product',
+		'numberposts' => -1,
+		'tax_query' => array(
+			array (
+				'taxonomy' => 'product_range',
+				'field' => 'term_id',
+				'terms' => $term->term_id,
+			))
+		];
+		$posts = get_posts( $args );
+		//echo count( $posts);
+		if ( count( $posts ) > 1 ) {
+			$this->display_product_range_links( $posts, $id );
+		}
+	}
 
+	function display_product_range_links( $posts, $id ) {
+		//echo '<ul class="product_range">';
+		foreach ( $posts as $post ) {
+			echo $this->get_product_range_link($post,$id) ;
+		}
+		//echo '</ul>';
+	}
+
+	function get_product_range_link( $post, $id ) {
+		$term = $this->get_product_range_term_name( $post );
+		$dimensions = $this->get_dimensions();
+		$current_class = ( $id === $post->ID ) ? 'btn-outline-primary disabled' : 'btn-primary';
+		$link = '<a class="btn btn-sml ';
+		$link .= $current_class;
+		$link .= '" href="';
+		if ( $id === $post->ID ) {
+			$link.='#';
+		} else {
+			$link.=get_permalink( $post->ID );
+		}
+		$link .= '"';
+		$link .= '>';
+		$link .= $dimensions;
+		$link .= '</a>';
+		return $link;
 	}
 
 }

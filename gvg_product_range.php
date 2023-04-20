@@ -37,7 +37,7 @@ function gvgpr_gvg_loaded() {
 
 function gvgpr_plugin_loaded() {
 	add_action( "gvg_loaded", "gvgpr_gvg_loaded" );
-	add_action( 'woocommerce_something_or_another', 'gvgpr_display_product_ranges');
+	add_action( 'display_gvg_product_range', 'gvgpr_display_gvg_product_range');
 	add_action( 'run_gvg_product_range.php', "gvgpr_run_gvg_product_range" );
 }
 
@@ -46,6 +46,13 @@ function gvgpr_run_gvg_product_range() {
 	require_once 'libs/class-gvg-product-range.php';
 	$gvgpr = new GVG_Product_Range();
 	$gvgpr->run_batch();
+
+}
+
+function gvgpr_display_gvg_product_range( $product ) {
+	require_once 'libs/class-gvg-product-range.php';
+	$gvgpr = new GVG_Product_Range();
+	$gvgpr->display_product_range( $product );
 
 }
 
