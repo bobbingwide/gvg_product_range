@@ -160,7 +160,7 @@ class GVG_Product_Range {
 	 * @return array|false|WP_Error|WP_Term|null
 	 */
 	function create_term( $term_name ) {
-		echo "Creating term: " . $term_name . PHP_EOL;
+		//echo "Creating term: " . $term_name . PHP_EOL;
 		$term_array = wp_insert_term( $term_name, 'product_range');
 		if ( is_wp_error( $term_array )) {
 			bw_trace2( $term_array, "WP Error");
@@ -171,7 +171,7 @@ class GVG_Product_Range {
 	}
 
 	function set_post_terms( $product, $term) {
-		echo "Setting product_range: " .$term->term_id . PHP_EOL;
+		//echo "Setting product_range: " .$term->term_id . PHP_EOL;
 		wp_set_post_terms( $product->ID, [ $term->term_id ], 'product_range');
 	}
 
@@ -242,29 +242,52 @@ class GVG_Product_Range {
 
 	function display_product_range_links( $posts, $id ) {
 		//echo '<ul class="product_range">';
+		$post_dimensions = [];
 		foreach ( $posts as $post ) {
-			echo $this->get_product_range_link($post,$id) ;
+			$term = $this->get_product_range_term_name( $post );
+			$dimensions = $this->get_dimensions();
+			$post_dimensions[ $post->ID ] = $dimensions;
+		}
+		// sort by dimensions using natural sort.
+		natsort( $post_dimensions );
+
+		foreach ( $post_dimensions as $post => $dimensions ) {
+			echo $this->get_product_range_link($post,$dimensions, $id) ;
 		}
 		//echo '</ul>';
 	}
 
-	function get_product_range_link( $post, $id ) {
-		$term = $this->get_product_range_term_name( $post );
-		$dimensions = $this->get_dimensions();
-		$current_class = ( $id === $post->ID ) ? 'btn-outline-primary disabled' : 'btn-primary';
+	function get_product_range_link( $post, $dimensions, $id ) {
+
+		$current_class = ( $id === $post ) ? 'btn-outline-primary disabled' : 'btn-primary';
 		$link = '<a class="btn btn-sml ';
 		$link .= $current_class;
 		$link .= '" href="';
-		if ( $id === $post->ID ) {
+		if ( $id === $post ) {
 			$link.='#';
 		} else {
-			$link.=get_permalink( $post->ID );
+			$link.=get_permalink( $post );
 		}
 		$link .= '"';
 		$link .= '>';
 		$link .= $dimensions;
 		$link .= '</a>';
 		return $link;
+	}
+
+	/**
+	 * Sets the product_range taxonomy term for the product.
+	 *
+	 * @param $post_ID
+	 * @param $post
+	 * @param $update
+	 *
+	 * @return void
+	 */
+	function set_product_range( $post_ID, $post, $update ) {
+		$term_name = $this->get_product_range_term_name( $post );
+		$term = $this->fetch_term( $term_name );
+		$this->set_post_terms( $post, $term );
 	}
 
 }
