@@ -102,7 +102,6 @@ class GVG_Product_Range {
 	 * @return void
 	 */
 	function get_product_range_term( $term_name ) {
-
 		return $term;
 	}
 
@@ -117,9 +116,12 @@ class GVG_Product_Range {
 		$products = get_posts( $args );
 		echo count($products ), PHP_EOL;
 		foreach ( $products as $product ) {
+			$term = $this->get_post_term( $product->ID );
 			$term_name = $this->get_product_range_term_name( $product );
-			$term = $this->fetch_term( $term_name );
-			$this->set_post_terms( $product, $term );
+			if ( null === $term || $term->name !== $term_name ) {
+				$term = $this->fetch_term( $term_name );
+				$this->set_post_terms( $product, $term );
+			}
 			$dimensions = $this->get_dimensions();
 			$csv = [];
 			$csv[] = $product->ID;
@@ -208,13 +210,33 @@ class GVG_Product_Range {
 	function display_product_range( $product ) {
 		$id = $product->get_id();
 		//echo '<p>Product range for ' . $id . '</p>';
+		$term = $this->get_post_term( $id );
+		if ( null !== $term ) {
+			$args =[
+				'post_type'  =>'product',
+				'numberposts'=>- 1,
+				'tax_query'  =>array(
+					array(
+						'taxonomy'=>'product_range',
+						'field'   =>'term_id',
+						'terms'   =>$term->term_id,
+					)
+				)
+			];
+			$posts=get_posts( $args );
+			//echo count( $posts);
+			if ( count( $posts ) > 1 ) {
+				$this->display_product_range_links( $posts, $id );
+			}
+		}
+	}
+
+	function get_post_term( $id ) {
+		$term = null;
 		$terms = wp_get_post_terms( $id, 'product_range' );
 		if ( is_wp_error( $terms ) ) {
-			//gob();
-			return;
+			return null;
 		}
-		//print_r( $terms );
-
 		if ( count( $terms) ) {
 			$term = $terms[0];
 		}
@@ -224,20 +246,7 @@ class GVG_Product_Range {
 		echo $term->name;
 		echo "mert";
 		*/
-		$args = [ 'post_type' => 'product',
-		'numberposts' => -1,
-		'tax_query' => array(
-			array (
-				'taxonomy' => 'product_range',
-				'field' => 'term_id',
-				'terms' => $term->term_id,
-			))
-		];
-		$posts = get_posts( $args );
-		//echo count( $posts);
-		if ( count( $posts ) > 1 ) {
-			$this->display_product_range_links( $posts, $id );
-		}
+		return $term;
 	}
 
 	function display_product_range_links( $posts, $id ) {
