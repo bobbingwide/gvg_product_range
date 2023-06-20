@@ -5,7 +5,7 @@ Tags: Product range, buttons, taxonomy
 Requires at least: 6.2
 Tested up to: 6.2
 Requires PHP: 7.3
-Stable tag: 0.0.0
+Stable tag: 0.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,10 +56,17 @@ where w is the width and l is the length
 1. 
  
 == Upgrade Notice ==
+= 0.1.0 = 
+Improved Product Ranges tab.
+
 = 0.0.0 =
 New plugin to display product range buttons - one for each size in the product range. 
 
 == Changelog ==
+= 0.1.0 = 
+* Changed: Product Ranges tab: Display additional fields #6. 
+* Changed: Format From price with 2 decimals #5
+
 = 0.0.0 =
 * Changed: Product Range update: Only set the product_range taxonomy term if not set or different from required #2
 * Changed: Sort dimensions #3. 

@@ -3,7 +3,7 @@
 Plugin Name: GVG Product Range
 Plugin URI: https://github.com/bobbingwide/gvg_product_range
 Description: GVG Product Range
-Version: 0.0.0
+Version: 0.1.0
 Author: bobbingwide
 Author URI: https://bobbingwide.com/about-bobbing-wide
 License: GPLv2 or later
