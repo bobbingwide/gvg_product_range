@@ -10,6 +10,9 @@ class GVG_Product_Range {
 
 
 	private $dimensions_words;
+    private $product; // WooCommerce Product object
+
+    private $sfpro_registered_sizes = null;
 
 	function __construct() {
 
@@ -115,6 +118,8 @@ class GVG_Product_Range {
 
 		$products = get_posts( $args );
 		echo count($products ), PHP_EOL;
+        stag( "table");
+        bw_tablerow( bw_as_array( 'ID,Title,Term,TermID,Visibility,Dimensions,Size,Brand,Building-Type,Material' ), 'tr', 'td');
 		foreach ( $products as $product ) {
 			$term = $this->get_post_term( $product->ID );
 			$term_name = $this->get_product_range_term_name( $product );
@@ -124,16 +129,32 @@ class GVG_Product_Range {
 			}
 			$dimensions = $this->get_dimensions();
 			$csv = [];
-			$csv[] = $product->ID;
+			$csv[] = $this->edit_link( $product->ID );
 			$csv[] = $product->post_title;
 			$csv[] = $term_name;
-			$csv[] = $dimensions;
 			$csv[] = $term->term_id;
+            $this->load_product( $product->ID );
+            $csv[] = $this->product_visibility();
+            $csv[] = $dimensions;
+
+            $csv[] = $this->size( $product->ID, $dimensions);
+            $csv[] = $this->brand( $product->ID);
+
+            $csv[] = $this->building_type();
+            $csv[] = $this->material();
+
+
+
+            /*
 			echo '<br />';
 			echo implode( ',', $csv);
 			echo PHP_EOL;
+            */
+            bw_tablerow( $csv );
 
 		}
+        etag( "table");
+        bw_flush();
 	}
 
 	/**
@@ -176,6 +197,112 @@ class GVG_Product_Range {
 		//echo "Setting product_range: " .$term->term_id . PHP_EOL;
 		wp_set_post_terms( $product->ID, [ $term->term_id ], 'product_range');
 	}
+    /**
+     * Returns an edit link for a post
+     * @param $ID
+     * @return string
+     */
+    function edit_link($ID) {
+        $url = get_edit_post_link($ID);
+        $link_wrapper_attributes = 'href=' . esc_url($url);
+        $html = sprintf(
+            '<a %1$s>%2$s</a>',
+            $link_wrapper_attributes,
+            $ID
+        );
+        return $html;
+    }
+
+    function load_product( $ID ) {
+        $this->product = wc_get_product( $ID );
+    }
+
+    function product_visibility() {
+        $visibility = $this->product->get_catalog_visibility();
+        return $visibility;
+
+    }
+
+    function get_wxl( $string ) {
+        $wxl = str_replace( "' x", 'x', $string );
+        $wxl = str_replace( "'", 'ft', $wxl );
+        $wxl = str_replace(' ', '', $wxl );
+        return $wxl;
+    }
+
+    function match_size( $size, $dimensions) {
+        //$size_wxl = $size$this->get_wxl( $size );
+        $dimensions_wxl = $this->get_wxl( $dimensions );
+        $match = 0 === strcmp( $size,  $dimensions_wxl );
+        return $match;
+    }
+
+    function size($ID, $dimensions) {
+        $size = get_post_meta( $ID, 'size', true);
+        $html = $size;
+        if (  !$this->match_size( $size, $dimensions ) ) {
+            $html = '<strong style="color:darkgoldenrod;">';
+            $html .= $size;
+            $html .= ' ?</strong>';
+        }
+        if ( !$this->is_an_sfpro_size( $size )) {
+            $html .= '<strong style="color:red">X</strong>';
+        }
+        return $html;
+    }
+
+    function get_sfpro_registered_sizes() {
+        $search_filter_fields = get_post_meta( 6288, '_search-filter-fields', true );
+        bw_trace2( $search_filter_fields, '_search-filter-fields', true );
+        $this->sfpro_registered_sizes = [];
+        foreach ( $search_filter_fields as $field ) {
+            if ( 'post_meta' === $field['type']
+                && 'size' === $field['choice_meta_key']
+                && 'manual' === $field['choice_get_option_mode']) {
+                bw_trace2( $field, "field", false );
+                $meta_options = $field['meta_options'];
+                foreach ( $meta_options as $meta_option ) {
+                    $this->sfpro_registered_sizes[$meta_option['option_value']] = $meta_option['option_label'];
+
+                }
+            }
+        }
+
+    }
+
+    function is_an_sfpro_size( $size ) {
+        if ( null === $this->sfpro_registered_sizes ) {
+            $this->get_sfpro_registered_sizes();
+        }
+        bw_trace2( $this->sfpro_registered_sizes, "registered sizes");
+        $is_a_size = isset( $this->sfpro_registered_sizes[$size] );
+        return $is_a_size;
+    }
+
+    function brand($ID) {
+        $brands = get_field( 'brand', $ID);
+        bw_trace2( $brands, "brands", true);
+        //$brands = is_array( $brands) ? $brands : [ $brands ];
+
+        //$brand = is_array( $brand) ?
+        $titles = [];
+        if ( $brands && count( $brands)) {
+            foreach ($brands as $brand) {
+                $titles[] = $brand->post_title;
+            }
+        }
+        return implode( ',', $titles );
+    }
+
+    function building_type() {
+        $attributes = $this->product->get_attribute( 'building-type');
+        return $attributes;
+    }
+
+    function material() {
+        $attributes = $this->product->get_attribute( 'material');
+        return $attributes;
+    }
 
 	function bulk_update() {
 		add_filter( "bw_nav_tabs_gvg_bulk_update", [ $this, "nav_tabs" ], 11, 2 );
@@ -259,17 +386,21 @@ class GVG_Product_Range {
 		}
 		// sort by dimensions using natural sort.
 		natsort( $post_dimensions );
-
+        echo '<div class="d-flex flex-wrap">';
 		foreach ( $post_dimensions as $post => $dimensions ) {
+            echo '<div class="me-2">';
 			echo $this->get_product_range_link($post,$dimensions, $id) ;
+            echo $this->product_from_price( $post );
+            echo '</div>';
 		}
+        echo '</div>';
 		//echo '</ul>';
 	}
 
 	function get_product_range_link( $post, $dimensions, $id ) {
 
 		$current_class = ( $id === $post ) ? 'btn-outline-primary disabled' : 'btn-primary';
-		$link = '<a class="btn btn-sml ';
+		$link = '<a class="btn btn-sml px-4 ';
 		$link .= $current_class;
 		$link .= '" href="';
 		if ( $id === $post ) {
@@ -283,6 +414,21 @@ class GVG_Product_Range {
 		$link .= '</a>';
 		return $link;
 	}
+
+    function product_from_price( $post ) {
+        $product = wc_get_product( $post);
+        //echo "<div>From price</div>";
+        if ( $product->is_on_sale() )  {
+            ?>
+            <p class="mb-1 font-colour-primary fw-medium" style="font-size: .9rem"><span style='background:#c31313;color:#fff;padding: 3px; display:inline-block;'>SALE</span> from: £<?php echo number_format(  $product->get_sale_price(), 2, '.', '' ); ?></p>
+            <?php
+        } else {
+            $price = number_format( $product->get_price(), 2 );
+            echo '<p class="mb-1 font-colour-primary fw-medium" style="font-size: .9rem">From: £' . $price . '</p>';
+
+        }
+
+    }
 
 	/**
 	 * Sets the product_range taxonomy term for the product.
