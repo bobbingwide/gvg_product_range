@@ -318,6 +318,11 @@ class GVG_Product_Range {
 		return $nav_tabs;
 	}
 
+    /**
+     * Displays the Product Ranges tab.
+     * 
+     * @return void
+     */
 	function nav_tab_product_range() {
 		BW_::oik_menu_header( __( "Product Ranges", "gvg_product_range" ), "w100pc" );
 		bw_flush();
@@ -329,35 +334,70 @@ class GVG_Product_Range {
 
 	/**
 	 * Displays the product range for the currently selected product.
-	 *
+     *
+   	 * There's no need to display the list when there's only one product in the range.
+     *
 	 * @param WC_Product_Simple $product
 	 *
 	 * @return void
 	 */
 	function display_product_range( $product ) {
-		$id = $product->get_id();
-		//echo '<p>Product range for ' . $id . '</p>';
-		$term = $this->get_post_term( $id );
-		if ( null !== $term ) {
-			$args =[
-				'post_type'  =>'product',
-				'numberposts'=>- 1,
-				'tax_query'  =>array(
-					array(
-						'taxonomy'=>'product_range',
-						'field'   =>'term_id',
-						'terms'   =>$term->term_id,
-					)
-				)
-			];
-			$posts=get_posts( $args );
-			//echo count( $posts);
-			if ( count( $posts ) > 1 ) {
-				$this->display_product_range_links( $posts, $id );
-			}
-		}
+        $id = $product->get_id();
+		$posts= $this->get_product_range_posts( $id );
+		if (count($posts) > 1) {
+            $this->display_product_range_links($posts, $id);
+        }
 	}
 
+    /**
+     * Displays the product range as a dropdown list.
+     *
+     * Displayed for any number of products, including one.
+     *
+     * @param WC_Product_Simple $product
+     * @return void
+    */
+    function display_product_range_dropdown( $product) {
+        $id = $product->get_id();
+        $posts= $this->get_product_range_posts( $id );
+        $this->display_product_range_dropdown_list( $product, $posts, $id);
+    }
+
+    /**
+     * Gets all the posts for the selected product range term.
+     *
+     * @param $id
+     * @return int[]|WP_Post[]|null
+     */
+    function get_product_range_posts( $id ) {
+        $term = $this->get_post_term( $id );
+        $posts = null;
+        if ( null !== $term ) {
+            $args = [
+                'post_type' => 'product',
+                'numberposts' => -1,
+                'tax_query' => array(
+                    array(
+                        'taxonomy' => 'product_range',
+                        'field' => 'term_id',
+                        'terms' => $term->term_id,
+                    )
+                )
+            ];
+            $posts = get_posts($args);
+        }
+        return $posts;
+
+    }
+
+    /**
+     * Gets the product range term for the selected product.
+     *
+     * Note: There should only be one product_range term for each product.
+     *
+     * @param $id
+     * @return mixed|null
+     */
 	function get_post_term( $id ) {
 		$term = null;
 		$terms = wp_get_post_terms( $id, 'product_range' );
@@ -367,26 +407,23 @@ class GVG_Product_Range {
 		if ( count( $terms) ) {
 			$term = $terms[0];
 		}
-		/*
-		echo "term";
-		echo $term->term_id;
-		echo $term->name;
-		echo "mert";
-		*/
 		return $term;
 	}
 
+    /**
+     * Displays product range links
+     *
+     * - The product range links are displayed horizontally.
+     * - The link to the current product is disabled.
+     * - Bootstrap styling allows for the links to wrap
+     *
+     * @param $posts
+     * @param $id
+     * @return void
+     */
 	function display_product_range_links( $posts, $id ) {
-		//echo '<ul class="product_range">';
-		$post_dimensions = [];
-		foreach ( $posts as $post ) {
-			$term = $this->get_product_range_term_name( $post );
-			$dimensions = $this->get_dimensions();
-			$post_dimensions[ $post->ID ] = $dimensions;
-		}
-		// sort by dimensions using natural sort.
-		natsort( $post_dimensions );
-        echo '<div class="d-flex flex-wrap">';
+        $post_dimensions = $this->get_post_dimensions( $posts );
+		echo '<div class="d-flex flex-wrap">';
 		foreach ( $post_dimensions as $post => $dimensions ) {
             echo '<div class="me-2">';
 			echo $this->get_product_range_link($post,$dimensions, $id) ;
@@ -397,10 +434,42 @@ class GVG_Product_Range {
 		//echo '</ul>';
 	}
 
-	function get_product_range_link( $post, $dimensions, $id ) {
+    /**
+     * Returns the dimensions for each product in the range, sorted naturally.
+     *
+     * @param $posts
+     * @return array
+     */
+    function get_post_dimensions( $posts) {
+        $post_dimensions = [];
+        foreach ( $posts as $post ) {
+            $term = $this->get_product_range_term_name( $post );
+            $dimensions = $this->get_dimensions();
+            $post_dimensions[ $post->ID ] = $dimensions;
+        }
+        // sort by dimensions using natural sort.
+        natsort( $post_dimensions );
+        return $post_dimensions;
+    }
 
-		$current_class = ( $id === $post ) ? 'btn-outline-primary disabled' : 'btn-primary';
-		$link = '<a class="btn btn-sml px-4 ';
+    /**
+     * Returns a link for the specific product in the range.
+     *
+     * Set the $id to 0 for the product range dropdown list.
+     * This ensures that the current item is enabled
+     * and sets the classes on the button to slightly smaller.
+     *
+     * @param $post
+     * @param $dimensions
+     * @param $id
+     * @return string
+     */
+	function get_product_range_link( $post, $dimensions, $id ) {
+        $disabled = ( $id === 0 ) ? '' : 'disabled';
+        $current_class = ( $id === 0 ) ? 'btn btn-sml px-2 py-1 ms-1 ' : 'btn btn-sml px-4 ';
+        $current_class .= ( $id === $post ) ? "btn-outline-primary $disabled" : 'btn-primary';
+
+		$link = '<a class="';
 		$link .= $current_class;
 		$link .= '" href="';
 		if ( $id === $post ) {
@@ -415,6 +484,14 @@ class GVG_Product_Range {
 		return $link;
 	}
 
+    /**
+     * Displays the product's from price.
+     *
+     * Prefixes the from price with SALE as required.
+     *
+     * @param $post
+     * @return void
+     */
     function product_from_price( $post ) {
         $product = wc_get_product( $post);
         //echo "<div>From price</div>";
@@ -425,9 +502,7 @@ class GVG_Product_Range {
         } else {
             $price = number_format( $product->get_price(), 2 );
             echo '<p class="mb-1 font-colour-primary fw-medium" style="font-size: .9rem">From: £' . $price . '</p>';
-
         }
-
     }
 
 	/**
@@ -444,5 +519,85 @@ class GVG_Product_Range {
 		$term = $this->fetch_term( $term_name );
 		$this->set_post_terms( $post, $term );
 	}
+
+    /**
+     * Filters duplicates of posts in the same product range.
+     *
+     * @return void
+     */
+    function filter_duplicates() {
+        global $wp_query;
+        //bw_trace2( $wp_query->posts, "posts", false );
+        $filtered = [];
+        $product_ranges = [];
+        foreach ( $wp_query->posts as $post ) {
+            $product_range = $this->get_post_term( $post->ID );
+            if ( !isset( $product_ranges[ $product_range->term_id ]) ) {
+                $product_ranges[ $product_range->term_id ] = $product_range;
+                $post->post_title = $product_range->name;
+                $post->product_range = $product_range;
+                $filtered[] = $post;
+            }
+        }
+        $wp_query->posts = $filtered;
+        // Reduce the post count to control the loop.
+        $wp_query->post_count = count( $filtered );
+    }
+
+    /**
+     * Displays the product range sizes as a dropdown list.
+     *
+     * See https://getbootstrap.com/docs/5.3/components/dropdowns/
+     *
+     * @param $product
+     * @param $posts
+     * @return void
+     */
+    function display_product_range_dropdown_list( $product, $posts, $id ) {
+        echo '<div class="dropdown">';
+        echo '<button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">';
+        echo count( $posts );
+        echo ' in range';
+        echo '</button>';
+        echo '<ul class="dropdown-menu">';
+        $post_dimensions = $this->get_post_dimensions( $posts );
+
+        foreach ( $post_dimensions as $post => $dimensions ) {
+            echo '<li class="dropdown-item">';
+            echo $this->get_product_range_link($post, $dimensions, 0 ) ;
+            echo $this->product_from_price( $post,  );
+            echo '</li>';
+        }
+       echo '</ul>';
+    }
+
+    /**
+     * Attaches the alter_title filter function to the_title.
+     *
+     * @return void
+     */
+    function set_product_range_title() {
+        static $added = false;
+        if ( !$added ) {
+            add_filter('the_title', [$this, "alter_title"], 10, 2);
+        }
+        $added = true;
+    }
+
+    /**
+     * Alters the product title to the product range.
+     *
+     * @param $post_title
+     * @param $post_id
+     * @return mixed
+     */
+    function alter_title( $post_title, $post_id ) {
+        $post = get_post( $post_id );
+        if ( 'product' === $post->post_type ) {
+            $product_range = $this->get_post_term( $post_id );
+            $post_title = $product_range->name;
+        }
+        return $post_title;
+    }
 
 }

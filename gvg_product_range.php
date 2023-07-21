@@ -40,6 +40,9 @@ function gvgpr_plugin_loaded() {
 	add_action( 'display_gvg_product_range', 'gvgpr_display_gvg_product_range');
 	add_action( 'run_gvg_product_range.php', "gvgpr_run_gvg_product_range" );
 	add_action( "wp_insert_post", "gvgpr_wp_insert_post", 10, 3 );
+    add_action( 'woocommerce_before_shop_loop', 'gvgpr_woocommerce_before_shop_loop');
+    add_action( 'display_gvg_product_range_dropdown', 'gvgpr_display_gvg_product_range_dropdown' );
+    add_action( 'set_product_range_title', 'gvgpr_set_product_range_title');
 }
 
 function gvgpr_run_gvg_product_range() {
@@ -57,6 +60,12 @@ function gvgpr_display_gvg_product_range( $product ) {
 
 }
 
+function gvgpr_display_gvg_product_range_dropdown( $product ) {
+    require_once 'libs/class-gvg-product-range.php';
+    $gvgpr = new GVG_Product_Range();
+    $gvgpr->display_product_range_dropdown( $product );
+}
+
 /**
  * Implements 'wp_insert_post' to automatically set the product_range taxonomy term
  *
@@ -72,6 +81,19 @@ function gvgpr_wp_insert_post( $post_ID, $post, $update ) {
 		$gvgpr = new GVG_Product_Range();
 		$gvgpr->set_product_range( $post_ID, $post, $update );
 	}
+}
+
+function gvgpr_woocommerce_before_shop_loop() {
+    //echo "filtering duplicates";
+    require_once 'libs/class-gvg-product-range.php';
+    $gvgpr = new GVG_Product_Range();
+    $gvgpr->filter_duplicates();
+}
+
+function gvgpr_set_product_range_title() {
+    require_once 'libs/class-gvg-product-range.php';
+    $gvgpr = new GVG_Product_Range();
+    $gvgpr->set_product_range_title();
 }
 
 gvgpr_plugin_loaded();
