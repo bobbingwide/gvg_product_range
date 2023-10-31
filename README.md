@@ -4,9 +4,9 @@
 * Donate link: https://www.oik-plugins.com/oik/oik-donate/
 * Tags: Product range, buttons, taxonomy
 * Requires at least: 6.2
-* Tested up to: 6.2
+* Tested up to: 6.4-RC2
 * Requires PHP: 7.3
-* Stable tag: 0.1.0
+* Stable tag: 0.2.0
 * License: GPLv2 or later
 * License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -46,6 +46,14 @@ Supported formats for the dimensions are:
 
 where w is the width and l is the length
 
+In v0.1.0 the Product Ranges table was extended to display
+
+- Visibility - Catalog visibility should be visible for all products
+- Dimensions - as extracted from the product title
+- Size - the value of the Product size field. An X indicates that the size doesn't match the title
+- Brand - the associated Brand for the Product
+- Building-Type - the Product's Building Type attribute
+- Material - the Product's Material attribute
 
 ## Installation 
 1. Upload the contents of the gvg_product_range plugin to the `/wp-content/plugins/gvg_product_range' directory
@@ -54,9 +62,12 @@ where w is the width and l is the length
 
 
 ## Screenshots 
-1.
+1. Product Ranges tab
 
 ## Upgrade Notice 
+# 0.2.0 
+Update for the product range duplicate filter and dropdown logic
+
 # 0.1.0 
 Improved Product Ranges tab.
 
@@ -64,6 +75,11 @@ Improved Product Ranges tab.
 New plugin to display product range buttons - one for each size in the product range.
 
 ## Changelog 
+# 0.2.0 
+* Changed: Implement product range duplicate filter and dropdown logic #7
+* Tested: With WordPress 6.4-RC2
+* Tested: With PHP 8.0, PHP 8.1 and PHP 8.2
+
 # 0.1.0 
 * Changed: Product Ranges tab: Display additional fields #6.
 * Changed: Format From price with 2 decimals #5
