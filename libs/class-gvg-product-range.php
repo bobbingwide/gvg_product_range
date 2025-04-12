@@ -464,22 +464,27 @@ class GVG_Product_Range {
      * @param $id
      * @return string
      */
-	function get_product_range_link( $post, $dimensions, $id ) {
-        $disabled = ( $id === 0 ) ? '' : 'disabled';
-        $current_class = ( $id === 0 ) ? 'btn btn-sml px-2 py-1 ms-1 ' : 'btn btn-sml px-4 ';
-        $current_class .= ( $id === $post ) ? "btn-outline-primary $disabled" : 'btn-primary';
+	function get_product_range_link( $post, $dimensions, $id )
+    {
+        $disabled = ($id === 0) ? '' : 'disabled';
+        $current_class = ($id === 0) ? 'btn btn-sml px-2 py-1 ms-1 ' : 'btn btn-sml px-4 ';
+        $current_class .= ($id === $post) ? "btn-outline-primary $disabled" : 'btn-primary';
 
-		$link = '<a class="';
-		$link .= $current_class;
-		$link .= '" href="';
-		if ( $id === $post ) {
-			$link.='#';
-		} else {
-			$link.=get_permalink( $post );
-		}
-		$link .= '"';
-		$link .= '>';
-		$link .= $dimensions;
+        $link = '<a class="';
+        $link .= $current_class;
+        $link .= '" href="';
+        if ($id === $post) {
+            $link .= '#';
+        } else {
+            $link .= get_permalink($post);
+        }
+        $link .= '"';
+        $link .= '>';
+        if ($dimensions) {
+            $link .= $dimensions;
+        } else {
+            $link .= '&nbsp;';
+        }
 		$link .= '</a>';
 		return $link;
 	}
@@ -557,7 +562,9 @@ class GVG_Product_Range {
         echo '<div class="dropdown">';
         echo '<button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">';
         echo count( $posts );
-        echo ' in range';
+        echo ' size';
+        if (count( $posts ) > 1 )
+                echo 's';
         echo '</button>';
         echo '<ul class="dropdown-menu">';
         $post_dimensions = $this->get_post_dimensions( $posts );
