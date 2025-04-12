@@ -85,6 +85,7 @@ function gvgpr_wp_insert_post( $post_ID, $post, $update ) {
 
 function gvgpr_woocommerce_before_shop_loop() {
     //echo "filtering duplicates";
+    if ( doing_action( 'admin_action_elementor')) return;
     require_once 'libs/class-gvg-product-range.php';
     $gvgpr = new GVG_Product_Range();
     $gvgpr->filter_duplicates();
