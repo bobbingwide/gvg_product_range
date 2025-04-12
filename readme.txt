@@ -3,9 +3,9 @@ Contributors: bobbingwide
 Donate link: https://www.oik-plugins.com/oik/oik-donate/
 Tags: Product range, buttons, taxonomy
 Requires at least: 6.2
-Tested up to: 6.4-RC2
+Tested up to: 6.8-RC4
 Requires PHP: 7.3
-Stable tag: 0.2.0
+Stable tag: 0.3.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ In v0.1.0 the Product Ranges table was extended to display
 1. Product Ranges tab
  
 == Upgrade Notice ==
+= 0.3.0 =
+Update to avoid Fatal error when using Elementor.
+
 = 0.2.0 =
 Update for the product range duplicate filter and dropdown logic 
 
@@ -74,6 +77,12 @@ Improved Product Ranges tab.
 New plugin to display product range buttons - one for each size in the product range. 
 
 == Changelog ==
+= 0.3.0 =
+* Changed: Improve styling when a product doesn't have dimensions #11
+* Fixed: Avoid doing product range stuff when using Elementor #10
+* Tested: With WordPress 6.8-RC3
+* Tested: With PHP 8.3
+
 = 0.2.0 = 
 * Changed: Implement product range duplicate filter and dropdown logic #7
 * Tested: With WordPress 6.4-RC2
